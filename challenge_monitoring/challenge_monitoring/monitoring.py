@@ -28,6 +28,11 @@ class MonitoringNode(Node):
             header_line = ["Time", "Mag X", "Mag Y", "Mag Z"]
             csv_writer.writerow(header_line)
 
+        with open(self.output_dir + "/attitude_converted_to_rollpitchyaw.csv", "w", newline="", encoding="utf-8") as mag_file:
+            csv_writer = csv.writer(mag_file)
+            header_line = ["Time", "Roll Deg", "Pitch Deg", "Yaw Deg"]
+            csv_writer.writerow(header_line)
+
         self.get_logger().info("Monitoring is ready.")
         if not self.get_parameter("disable_visualization").value:
             update_rate_hz = self.get_parameter("update_rate_hz").value
@@ -50,6 +55,9 @@ class MonitoringNode(Node):
 
 
     def ang_subscription_callback(self, msg: AngTimestamped):
+        with open(self.output_dir + "/attitude_converted_to_rollpitchyaw.csv", 'a', newline="", encoding="utf-8") as mag_file:
+            csv_writer = csv.writer(mag_file)
+            csv_writer.writerow([msg.timestamp, msg.roll, msg.pitch, msg.yaw])
         self.ang_timestamps = np.append(self.ang_timestamps, msg.timestamp)
         if self.ang_data is not None:
             self.ang_data = np.vstack((self.ang_data, [msg.roll, msg.pitch, msg.yaw]))
