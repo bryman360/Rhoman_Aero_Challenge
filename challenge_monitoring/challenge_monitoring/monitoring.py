@@ -1,21 +1,33 @@
 import rclpy
 from rclpy.node import Node
-import numpy as np
-from matplotlib import pyplot as plt
 from challenge_interfaces.msg import AngTimestamped, MagTimestamped
+
+import numpy as np
+import csv
+from matplotlib import pyplot as plt
 
 class MonitoringNode(Node):
     def __init__(self, name):
         super().__init__(name)
         self.declare_parameter("update_rate_hz", 1)
         self.declare_parameter("disable_visualization", False)
+        self.declare_parameter("output_dir", "/home/bryman360/csv_files")
         self.mag_subscription = self.create_subscription(MagTimestamped, "sensor_mag_ts", self.mag_subscription_callback, 10)
         self.ang_subscription = self.create_subscription(AngTimestamped, "vehicle_ang_ts", self.ang_subscription_callback, 10)
         self.estimator_subscription = self.create_subscription(MagTimestamped, "estimator_vals_ts", self.estimator_subscription_callback, 10)
+
         self.mag_timestamps = np.array([], dtype=np.uint32)
         self.ang_timestamps = np.array([], dtype=np.uint32)
         self.mag_data = None
         self.ang_data = None
+
+        self.output_dir = str(self.get_parameter("output_dir").value)
+
+        with open(self.output_dir + "/mag_values.csv", "w", newline="", encoding="utf-8") as mag_file:
+            csv_writer = csv.writer(mag_file)
+            header_line = ["Time", "Mag X", "Mag Y", "Mag Z"]
+            csv_writer.writerow(header_line)
+
         self.get_logger().info("Monitoring is ready.")
         if not self.get_parameter("disable_visualization").value:
             update_rate_hz = self.get_parameter("update_rate_hz").value
@@ -26,11 +38,16 @@ class MonitoringNode(Node):
             self.gridspec = self.plt_fig.add_gridspec(2, 4)
 
     def mag_subscription_callback(self, msg: MagTimestamped):
+        with open(self.output_dir + "/mag_values.csv", 'a', newline="", encoding="utf-8") as mag_file:
+            csv_writer = csv.writer(mag_file)
+            csv_writer.writerow([msg.timestamp, msg.x, msg.y, msg.z])
+        
         self.mag_timestamps = np.append(self.mag_timestamps, msg.timestamp)
         if self.mag_data is not None:
             self.mag_data = np.vstack((self.mag_data, np.array([msg.x, msg.y, msg.z], dtype=np.float32)))
         else:
             self.mag_data = np.array([[msg.x, msg.y, msg.z]], dtype=np.float32)
+
 
     def ang_subscription_callback(self, msg: AngTimestamped):
         self.ang_timestamps = np.append(self.ang_timestamps, msg.timestamp)

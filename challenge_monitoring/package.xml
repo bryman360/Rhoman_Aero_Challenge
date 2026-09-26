@@ -17,6 +17,7 @@
 
   <exec_depend>python3-numpy</exec_depend>
   <exec_depend>matplotlib</exec_depend>
+  <exec_depend>csv</exec_depend>
 
   <export>
     <build_type>ament_python</build_type>
