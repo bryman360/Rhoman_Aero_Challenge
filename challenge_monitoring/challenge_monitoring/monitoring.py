@@ -16,12 +16,14 @@ class MonitoringNode(Node):
         self.ang_timestamps = np.array([], dtype=np.uint32)
         self.mag_data = None
         self.ang_data = None
-        update_rate_hz = self.get_parameter("update_rate_hz").value
-        if type(update_rate_hz) != int:
-            update_rate_hz = 1
         self.get_logger().info("Monitoring is ready.")
         if not self.get_parameter("disable_visualization").value:
-            self.visualize(update_rate_hz)
+            update_rate_hz = self.get_parameter("update_rate_hz").value
+            if type(update_rate_hz) != int:
+                update_rate_hz = 1
+            self.visualization_timer = self.create_timer((1 / update_rate_hz), self.visualization_timer_callback)
+            self.plt_fig = plt.figure(figsize=(10, 6))
+            self.gridspec = self.plt_fig.add_gridspec(2, 4)
 
     def mag_subscription_callback(self, msg: MagTimestamped):
         self.mag_timestamps = np.append(self.mag_timestamps, msg.timestamp)
@@ -40,8 +42,21 @@ class MonitoringNode(Node):
     def estimator_subscription_callback(self, msg: MagTimestamped):
         pass
 
-    def visualize(self, update_rate_hz: int):
-        pass
+    def visualization_timer_callback(self):
+        if len(self.mag_timestamps) < 1000:
+            return
+        # mag_subplot = self.plt_fig.add_subplot(self.gridspec[0:2, 0])
+        scaled_mag_ts = self.mag_timestamps / 1000000
+        plt.plot(scaled_mag_ts, self.mag_data[:, 0], color='red', linewidth=0.5)
+        plt.plot(scaled_mag_ts, self.mag_data[:, 1], color='green', linewidth=0.5)
+        plt.plot(scaled_mag_ts, self.mag_data[:, 2], color='blue', linewidth=0.5)
+        plt.xlabel('Flight Time [s]')
+        plt.ylabel('Relative Strength [-]')
+        plt.title('Raw Mag x/y/z (r/g/b)')
+        plt.xlim(scaled_mag_ts[0], scaled_mag_ts[0])
+
+        plt.show()
+        plt.waitforbuttonpress()
 
 
 
