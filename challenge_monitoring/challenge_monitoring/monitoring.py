@@ -1,22 +1,46 @@
 import rclpy
 from rclpy.node import Node
+import numpy as np
 from matplotlib import pyplot as plt
 from challenge_interfaces.msg import AngTimestamped, MagTimestamped
 
 class MonitoringNode(Node):
     def __init__(self, name):
         super().__init__(name)
+        self.declare_parameter("update_rate_hz", 1)
+        self.declare_parameter("disable_visualization", False)
         self.mag_subscription = self.create_subscription(MagTimestamped, "sensor_mag_ts", self.mag_subscription_callback, 10)
         self.ang_subscription = self.create_subscription(AngTimestamped, "vehicle_ang_ts", self.ang_subscription_callback, 10)
         self.estimator_subscription = self.create_subscription(MagTimestamped, "estimator_vals_ts", self.estimator_subscription_callback, 10)
+        self.mag_timestamps = np.array([], dtype=np.uint32)
+        self.ang_timestamps = np.array([], dtype=np.uint32)
+        self.mag_data = None
+        self.ang_data = None
+        update_rate_hz = self.get_parameter("update_rate_hz").value
+        if type(update_rate_hz) != int:
+            update_rate_hz = 1
+        self.get_logger().info("Monitoring is ready.")
+        if not self.get_parameter("disable_visualization").value:
+            self.visualize(update_rate_hz)
 
     def mag_subscription_callback(self, msg: MagTimestamped):
-        pass
+        self.mag_timestamps = np.append(self.mag_timestamps, msg.timestamp)
+        if self.mag_data is not None:
+            self.mag_data = np.vstack((self.mag_data, np.array([msg.x, msg.y, msg.z], dtype=np.float32)))
+        else:
+            self.mag_data = np.array([[msg.x, msg.y, msg.z]], dtype=np.float32)
 
     def ang_subscription_callback(self, msg: AngTimestamped):
-        pass
+        self.ang_timestamps = np.append(self.ang_timestamps, msg.timestamp)
+        if self.ang_data is not None:
+            self.ang_data = np.vstack((self.ang_data, [msg.roll, msg.pitch, msg.yaw]))
+        else:
+            self.ang_data = np.array([[msg.roll, msg.pitch, msg.yaw]], dtype=np.float32)
 
     def estimator_subscription_callback(self, msg: MagTimestamped):
+        pass
+
+    def visualize(self, update_rate_hz: int):
         pass
 
 

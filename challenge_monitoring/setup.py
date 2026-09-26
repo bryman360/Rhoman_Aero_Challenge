@@ -13,9 +13,9 @@ setup(
     ],
     install_requires=['setuptools'],
     zip_safe=True,
-    maintainer='bryman360',
-    maintainer_email='bryman360@yahoo.com',
-    description='TODO: Package description',
+    maintainer='Bryan Luco',
+    maintainer_email='bluco55@gmail.com',
+    description='Monitoring GUI and Logging of Flight/Estimator Data',
     license='TODO: License declaration',
     extras_require={
         'test': [
@@ -24,6 +24,7 @@ setup(
     },
     entry_points={
         'console_scripts': [
+            'monitoring = challenge_monitoring.monitoring:main'
         ],
     },
 )
