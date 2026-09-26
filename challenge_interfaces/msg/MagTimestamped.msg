@@ -1,4 +1,4 @@
-float64 timestamp
-float64 x
-float64 y
-float64 z
+uint32 timestamp
+float32 x
+float32 y
+float32 z

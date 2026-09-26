@@ -1,4 +1,4 @@
-float64 timestamp
-float64 roll
-float64 pitch
-float64 yaw
+uint32 timestamp
+float32 roll
+float32 pitch
+float32 yaw
