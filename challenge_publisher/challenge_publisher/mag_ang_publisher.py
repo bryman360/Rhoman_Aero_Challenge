@@ -36,31 +36,31 @@ def convert_quaternion_to_rpy(w: np.float64, x: np.float64, y: np.float64, z: np
 class MagAngPublisherNode(Node):
     def __init__(self, name):
         super().__init__(name)
-        self.ang_publisher = self.create_publisher(AngTimestamped, "vehicle_ang_ts", 10)
-        self.mag_publisher = self.create_publisher(MagTimestamped, "sensor_mag_ts", 10)
-        self.mag_data, self.att_data = get_mag_and_att_values_from_ulog('/home/bryman360/Downloads/04_13_03.ulg')
+        self.ang_publisher_ = self.create_publisher(AngTimestamped, "vehicle_ang_ts", 10)
+        self.mag_publisher_ = self.create_publisher(MagTimestamped, "sensor_mag_ts", 10)
+        self.mag_data_, self.att_data_ = get_mag_and_att_values_from_ulog('/home/bryman360/Downloads/04_13_03.ulg')
         self.get_logger().info("Publisher node ready.")
         self.spin()
 
 
     def spin(self):
-        if not self.mag_data and not self.att_data:
+        if not self.mag_data_ and not self.att_data_:
             self.get_logger().error("No Magnetometer Data or Attitude data loaded in. Exiting.")
             return
 
         mag_i = 0
         att_i = 0
 
-        mag_ts = np.array(self.mag_data['timestamp'], dtype=np.uint64) * 1000
-        mag_x = self.mag_data['x']
-        mag_y = self.mag_data['y']
-        mag_z = self.mag_data['z']
+        mag_ts = np.array(self.mag_data_['timestamp'], dtype=np.uint64) * 1000
+        mag_x = self.mag_data_['x']
+        mag_y = self.mag_data_['y']
+        mag_z = self.mag_data_['z']
 
-        att_ts = np.array(self.att_data['timestamp'], dtype=np.uint64) * 1000
-        att_q0 = self.att_data['q[0]']
-        att_q1 = self.att_data['q[1]']
-        att_q2 = self.att_data['q[2]']
-        att_q3 = self.att_data['q[3]']
+        att_ts = np.array(self.att_data_['timestamp'], dtype=np.uint64) * 1000
+        att_q0 = self.att_data_['q[0]']
+        att_q1 = self.att_data_['q[1]']
+        att_q2 = self.att_data_['q[2]']
+        att_q3 = self.att_data_['q[3]']
 
         self.get_logger().info("About to begin publishing data")
         
@@ -80,7 +80,7 @@ class MagAngPublisherNode(Node):
                 msg.roll = float(roll)
                 msg.pitch = float(pitch)
                 msg.yaw = float(yaw)
-                self.ang_publisher.publish(msg)
+                self.ang_publisher_.publish(msg)
                 att_i += 1
 
             while mag_i < len(mag_ts) and mag_ts[mag_i] <= sim_time_ns:
@@ -89,7 +89,7 @@ class MagAngPublisherNode(Node):
                 msg.x = float(mag_x[mag_i])
                 msg.y = float(mag_y[mag_i])
                 msg.z = float(mag_z[mag_i])
-                self.mag_publisher.publish(msg)
+                self.mag_publisher_.publish(msg)
                 mag_i += 1
 
             last_real_time_ns = current_real_time_ns
