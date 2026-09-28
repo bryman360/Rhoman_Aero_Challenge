@@ -109,10 +109,24 @@ def main(args=None):
     ang_y_subplot.set_title('Yaw')
     ang_y_subplot.set_ylim(0, 400)
 
+    azi_inst_pts = azi_subplot.scatter(scaled_ang_ts, [], color='green')
+    azi_avg_pts = azi_subplot.scatter(scaled_ang_ts, [], color='black')
+    azi_subplot.set_xlabel('Flight Time [s]')
+    azi_subplot.set_ylabel('Degrees East')
+    azi_subplot.set_title('Estimated Instantaneous/Average Magnetic Field Azimuth (green/black)')
+    azi_subplot.set_ylim(0, 20)
+    
+    ele_inst_pts = azi_subplot.scatter(scaled_ang_ts, [], color='green')
+    ele_avg_pts = azi_subplot.scatter(scaled_ang_ts, [], color='black')
+    ele_subplot.set_xlabel('Flight Time [s]')
+    ele_subplot.set_ylabel('Degrees Down')
+    ele_subplot.set_title('Estimated Instantaneous/Average Magnetic Field Elevation (green/black)')
+    ele_subplot.set_ylim(54, 68)
+
     def update(frame):
         with node.lock:
             if node.ang_data is None or node.mag_data is None:
-                return x_line, y_line, z_line, r_line, p_line, yaw_line
+                return x_line, y_line, z_line, r_line, p_line, yaw_line, azi_inst_pts, azi_avg_pts, ele_inst_pts, ele_avg_pts
             scaled_mag_ts = node.mag_timestamps / 1000000
             scaled_ang_ts = node.ang_timestamps / 1000000
             x_data = node.mag_data[:, 0]
@@ -135,7 +149,7 @@ def main(args=None):
         yaw_line.set_data(scaled_ang_ts, yaw_data)
         ang_y_subplot.set_xlim(scaled_ang_ts[0], scaled_ang_ts[-1])
 
-        return x_line, y_line, z_line, r_line, p_line, yaw_line
+        return x_line, y_line, z_line, r_line, p_line, yaw_line, azi_inst_pts, azi_avg_pts, ele_inst_pts, ele_avg_pts
 
 
     ani = FuncAnimation(fig, update, interval=500, blit=False)
