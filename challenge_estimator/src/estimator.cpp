@@ -1,13 +1,13 @@
 #include <estimator.hpp>
 
 void Estimator::ingMagMessage(double net_time, Eigen::Vector3d vars) {
-   if (mag_i >= max_mag_i) {
-    mag_buff_full = true;
-    mag_i = 0;
-   }
-   Eigen::RowVector4d new_row_data = Eigen::RowVector4d(net_time, vars[0], vars[1], vars[2]);
-   mag_meas.row(mag_i) = new_row_data;
-   mag_i++;
+    if (mag_i >= max_mag_i) {
+        mag_buff_full = true;
+        mag_i = 0;
+    }
+    Eigen::RowVector4d new_row_data = Eigen::RowVector4d(net_time, vars[0], vars[1], vars[2]);
+    mag_meas.row(mag_i) = new_row_data;
+    mag_i++;
 }
 
 void Estimator::ingAngMessage(double net_time, Eigen::Vector3d vars) {
