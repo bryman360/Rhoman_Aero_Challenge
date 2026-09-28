@@ -33,8 +33,8 @@ private:
     uint32_t est_vals_to_use = 100;
     Eigen::Vector3d average_mag_vector = Eigen::Vector3d(0, 0, 0);
     Eigen::Vector3d instant_mag_vector = Eigen::Vector3d(0, 0, 0);
-    Eigen::Vector2d average_az_el = Eigen::Vector2d(0, 0);
-    Eigen::Vector2d instant_az_el = Eigen::Vector2d(0, 0);
+    Eigen::Vector3d average_az_el = Eigen::Vector3d(0, 0, 0); // Time, az, el
+    Eigen::Vector3d instant_az_el = Eigen::Vector3d(0, 0, 0); // Time, az, el
     double nmag = 0;
 };
 

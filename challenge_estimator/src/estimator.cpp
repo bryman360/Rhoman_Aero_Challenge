@@ -4,6 +4,7 @@ double interp1MDWL(Eigen::VectorXd x, Eigen::VectorXd y, double xq, bool dounwra
 Eigen::Matrix3d getR(double roll, double pitch, double yaw);
 Eigen::MatrixXd sortMatrixByCol(Eigen::MatrixXd mat, uint32_t col);
 double wrapTo360(double deg_val);
+// TODO: interp1 and sortMatrix
 
 void Estimator::ingMagMessage(double net_time, Eigen::Vector3d vars) {
     if (mag_i >= max_mag_i) {
@@ -85,8 +86,8 @@ void Estimator::spin(double net_time) {
             average_mag_vector = average_mag_vector / average_mag_vector.norm();
             nmag++;
 
-            average_az_el << wrapTo360(std::atan2(average_mag_vector[1], average_mag_vector[0])), std::atan(average_mag_vector[2]/average_mag_vector.segment(0, 2).norm());
-            instant_az_el << wrapTo360(std::atan2(instant_mag_vector[1], instant_mag_vector[0])), std::atan(instant_mag_vector[2]/instant_mag_vector.segment(0, 2).norm());
+            average_az_el << net_time, wrapTo360(std::atan2(average_mag_vector[1], average_mag_vector[0])), std::atan(average_mag_vector[2]/average_mag_vector.segment(0, 2).norm());
+            instant_az_el << net_time, wrapTo360(std::atan2(instant_mag_vector[1], instant_mag_vector[0])), std::atan(instant_mag_vector[2]/instant_mag_vector.segment(0, 2).norm());
         }
     }
 }
