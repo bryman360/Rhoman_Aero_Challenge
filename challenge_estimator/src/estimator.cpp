@@ -68,28 +68,28 @@ void Estimator::spin(double net_time) {
     */
 }
 
-double Estimator::interp1MDWL(Eigen::MatrixXd x, Eigen::MatrixXd y, double xq, bool dounwrap, uint32_t wraprange) {
-    /*
-    if xq < min(x) || isscalar(x)
-        yq = y[1]
-    elif xq > max(x)
-        yq = y[-1]
-    else
-        if dounwrap
-            y1 = y
-            cumulative_shift = 0
-            for i=2:len(y)
-                jump = y[i] - y[i-1]
-                if abs(jump) > wraprange
-                    shift_count = floor(abs(jump/wraprange)) * sign(jump)
-                    cumulative_shift = cumulative_shift - (shift_count * wraprange)
-                y1[i] = y[i] + cumulative_shift
-        else
-            y1 = y
-        
-        yq = interp1(x, y1, xq, varargin)
-    */
-   return 0.0;
+double Estimator::interp1MDWL(Eigen::VectorXd x, Eigen::VectorXd y, double xq, bool dounwrap, uint32_t wraprange) {
+    if (xq < x.minCoeff()) {
+        return y[0];
+    } else if (xq > x.maxCoeff()) {
+        return y[y.size() - 1];
+    }
+
+    Eigen::VectorXd y1 = y;
+    if (dounwrap) {
+        uint32_t cumulative_shift = 0;
+        for (int i = 1; i < y.size(); i++) {
+            double jump = y[i] - y[i-1];
+            if (abs(jump) > wraprange) {
+                uint32_t shift_count = floor(abs(jump/wraprange)) * (jump < 0 ? -1 : 1);
+                cumulative_shift -= (shift_count * wraprange);
+            }
+            y1[i] = y[i] + cumulative_shift;
+        }
+    }
+
+    // return interp1(x, y1, xq, 'linear');
+    return 0.0;
 }
 
 Eigen::Matrix3d Estimator::getR(double roll, double pitch, double yaw) {

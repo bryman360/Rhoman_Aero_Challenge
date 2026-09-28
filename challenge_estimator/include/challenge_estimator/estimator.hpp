@@ -35,7 +35,7 @@ private:
     double nmag = 0;
     bool have_new_mag_meas = false;
 
-    double interp1MDWL(Eigen::MatrixXd x, Eigen::MatrixXd y, double xq, bool dounwrap, uint32_t wraprange);
+    double interp1MDWL(Eigen::VectorXd x, Eigen::VectorXd y, double xq, bool dounwrap, uint32_t wraprange);
     Eigen::Matrix3d getR(double roll, double pitch, double yaw);
 };
 
