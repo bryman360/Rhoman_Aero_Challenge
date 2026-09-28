@@ -9,8 +9,8 @@ public:
     void ingAngMessage(double net_time, Eigen::Vector3d vals);
     void spin(double net_time);
     bool have_new_mag_meas = false;
-    Eigen::Vector2d getAvgAzEL() {return average_az_el;};
-    Eigen::Vector2d getInstAzEL() {return instant_az_el;};
+    Eigen::Vector3d getAvgAzEL() {return average_az_el;};
+    Eigen::Vector3d getInstAzEL() {return instant_az_el;};
 private:
     Eigen::MatrixXd mag_meas = Eigen::MatrixXd::Zero(100, 4); // Time, x, y, z
     uint32_t mag_i = 0;
