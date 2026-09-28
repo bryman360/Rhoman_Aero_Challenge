@@ -1,2 +1,3 @@
 uint32 timestamp
-float64 elevation
+float64 average_elevation
+float64 instant_elevation

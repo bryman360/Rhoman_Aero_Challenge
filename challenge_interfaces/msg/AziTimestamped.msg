@@ -1,2 +1,3 @@
 uint32 timestamp
-float64 azimuth
+float64 average_azimuth
+float64 instant_azimuth
