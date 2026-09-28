@@ -36,6 +36,6 @@ private:
     bool have_new_mag_meas = false;
 
     double interp1MDWL(Eigen::MatrixXd x, Eigen::MatrixXd y, double xq, bool dounwrap, uint32_t wraprange, std::string varargin);
-    std::array<Eigen::Matrix3d, 2> getR(double roll, double pitch, double yaw, std::string frame, std::string units);
+    Eigen::Matrix3d getR(double roll, double pitch, double yaw);
 };
 

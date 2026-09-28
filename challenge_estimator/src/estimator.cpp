@@ -92,7 +92,7 @@ double Estimator::interp1MDWL(Eigen::MatrixXd x, Eigen::MatrixXd y, double xq, b
    return 0.0;
 }
 
-std::array<Eigen::Matrix3d, 2> Estimator::getR(double roll, double pitch, double yaw, std::string frame, std::string units) {
+Eigen::Matrix3d Estimator::getR(double roll, double pitch, double yaw) {
     Eigen::Matrix3d Rx, Ry, Rz;
 
     roll = roll * M_PI/180;
@@ -110,5 +110,5 @@ std::array<Eigen::Matrix3d, 2> Estimator::getR(double roll, double pitch, double
           0, 0, 1;
     
     Eigen::Matrix3d R = Rx * Ry * Rz;
-    return {R, R.inverse()};
+    return R;
 }
