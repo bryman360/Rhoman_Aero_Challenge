@@ -1,18 +1,9 @@
 #include <estimator.hpp>
 
-Eigen::MatrixXd sortMatrixByCol(Eigen::MatrixXd mat, uint32_t col) {
-    return mat;
-}
-
-double wrapTo360(double deg_val) {
-    while (deg_val > 360) {
-        deg_val -= 360;
-    }
-    while (deg_val < 0) {
-        deg_val += 360;
-    }
-    return deg_val;
-}
+double interp1MDWL(Eigen::VectorXd x, Eigen::VectorXd y, double xq, bool dounwrap, uint32_t wraprange);
+Eigen::Matrix3d getR(double roll, double pitch, double yaw);
+Eigen::MatrixXd sortMatrixByCol(Eigen::MatrixXd mat, uint32_t col);
+double wrapTo360(double deg_val);
 
 void Estimator::ingMagMessage(double net_time, Eigen::Vector3d vars) {
     if (mag_i >= max_mag_i) {
@@ -100,7 +91,7 @@ void Estimator::spin(double net_time) {
     }
 }
 
-double Estimator::interp1MDWL(Eigen::VectorXd x, Eigen::VectorXd y, double xq, bool dounwrap, uint32_t wraprange) {
+double interp1MDWL(Eigen::VectorXd x, Eigen::VectorXd y, double xq, bool dounwrap, uint32_t wraprange) {
     if (xq < x.minCoeff()) {
         return y[0];
     } else if (xq > x.maxCoeff()) {
@@ -124,7 +115,7 @@ double Estimator::interp1MDWL(Eigen::VectorXd x, Eigen::VectorXd y, double xq, b
     return 0.0;
 }
 
-Eigen::Matrix3d Estimator::getR(double roll, double pitch, double yaw) {
+Eigen::Matrix3d getR(double roll, double pitch, double yaw) {
     Eigen::Matrix3d Rx, Ry, Rz;
 
     roll = roll * M_PI/180;
@@ -143,4 +134,18 @@ Eigen::Matrix3d Estimator::getR(double roll, double pitch, double yaw) {
     
     Eigen::Matrix3d R = Rx * Ry * Rz;
     return R;
+}
+
+Eigen::MatrixXd sortMatrixByCol(Eigen::MatrixXd mat, uint32_t col) {
+    return mat;
+}
+
+double wrapTo360(double deg_val) {
+    while (deg_val > 360) {
+        deg_val -= 360;
+    }
+    while (deg_val < 0) {
+        deg_val += 360;
+    }
+    return deg_val;
 }

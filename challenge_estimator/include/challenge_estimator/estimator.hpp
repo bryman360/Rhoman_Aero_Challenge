@@ -36,8 +36,5 @@ private:
     Eigen::Vector2d average_az_el = Eigen::Vector2d(0, 0);
     Eigen::Vector2d instant_az_el = Eigen::Vector2d(0, 0);
     double nmag = 0;
-
-    double interp1MDWL(Eigen::VectorXd x, Eigen::VectorXd y, double xq, bool dounwrap, uint32_t wraprange);
-    Eigen::Matrix3d getR(double roll, double pitch, double yaw);
 };
 
