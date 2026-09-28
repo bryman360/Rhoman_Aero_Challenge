@@ -1,6 +1,7 @@
 #include <estimator.hpp>
 
 double interp1MDWL(Eigen::VectorXd x, Eigen::VectorXd y, double xq, bool dounwrap, uint32_t wraprange);
+double interp1(Eigen::VectorXd x, Eigen::VectorXd y, double xq);
 Eigen::Matrix3d getR(double roll, double pitch, double yaw);
 Eigen::MatrixXd sortMatrixByCol(Eigen::MatrixXd mat, uint32_t col);
 double wrapTo360(double deg_val);
@@ -112,8 +113,18 @@ double interp1MDWL(Eigen::VectorXd x, Eigen::VectorXd y, double xq, bool dounwra
         }
     }
 
-    // return interp1(x, y1, xq, 'linear');
-    return 0.0;
+    return interp1(x, y1, xq);
+}
+
+double interp1(Eigen::VectorXd x, Eigen::VectorXd y, double xq) {
+    for (int i = 0; i < x.size() - 1; i++) {
+        if (xq >= x[i]) {
+            double ref_ratio = (xq - x[i]) / (x[i+1] - x[i]);
+            double y_diff = y[i+1] - y[i];
+            return (y_diff * ref_ratio) + y[i];
+        }
+    }
+    return y[y.size() - 1];
 }
 
 Eigen::Matrix3d getR(double roll, double pitch, double yaw) {
