@@ -1,13 +1,13 @@
 #include <estimator.hpp>
 
 void Estimator::ingMagMessage(double net_time, Eigen::Vector3d vars) {
-    /*
-    magi++
-    if magi > max_magi
-        mag_buff_full = true
-        magi = 1
-    mag_meas(magi, :) = [net_time, vals]
-    */
+   if (mag_i >= max_mag_i) {
+    mag_buff_full = true;
+    mag_i = 0;
+   }
+   Eigen::RowVector4d new_row_data = Eigen::RowVector4d(net_time, vars[0], vars[1], vars[2]);
+   mag_meas.row(mag_i) = new_row_data;
+   mag_i++;
 }
 
 void Estimator::ingAngMessage(double net_time, Eigen::Vector3d vars) {
@@ -89,6 +89,7 @@ double Estimator::interp1MDWL(Eigen::MatrixXd x, Eigen::MatrixXd y, double xq, b
         
         yq = interp1(x, y1, xq, varargin)
     */
+   return 0.0;
 }
 
 std::array<Eigen::Matrix3d, 2> Estimator::getR(double roll, double pitch, double yaw, std::string frame, std::string units) {
@@ -109,4 +110,5 @@ std::array<Eigen::Matrix3d, 2> Estimator::getR(double roll, double pitch, double
     Rinv = inv(R)
     return [R, Rinv]
     */
+   return {Eigen::Matrix3d::Zero(), Eigen::Matrix3d::Zero()};
 }
