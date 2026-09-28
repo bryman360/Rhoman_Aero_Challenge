@@ -4,7 +4,7 @@ double interp1MDWL(Eigen::VectorXd x, Eigen::VectorXd y, double xq, bool dounwra
 Eigen::Matrix3d getR(double roll, double pitch, double yaw);
 Eigen::MatrixXd sortMatrixByCol(Eigen::MatrixXd mat, uint32_t col);
 double wrapTo360(double deg_val);
-// TODO: interp1 and sortMatrix
+// TODO: interp1
 
 void Estimator::ingMagMessage(double net_time, Eigen::Vector3d vars) {
     if (mag_i >= max_mag_i) {
@@ -138,7 +138,25 @@ Eigen::Matrix3d getR(double roll, double pitch, double yaw) {
 }
 
 Eigen::MatrixXd sortMatrixByCol(Eigen::MatrixXd mat, uint32_t col) {
-    return mat;
+    Eigen::MatrixXd sorted_mat = Eigen::MatrixXd::Zero(mat.rows(), mat.cols());
+    std::pair<int, double> indexes_and_timestamps[mat.rows()];
+    
+    for (int i=0; i < mat.rows(); i++) {
+        indexes_and_timestamps[i].first = i;
+        indexes_and_timestamps[i].second = mat(i, col);
+    }
+
+    int n = sizeof(indexes_and_timestamps) / sizeof(indexes_and_timestamps[0]);
+
+    std::sort(indexes_and_timestamps, indexes_and_timestamps + n, [](std::pair<int, double> a, std::pair<int, double> b) {
+        return a.second < b.second;
+    });
+
+    for (int i=0; i < mat.rows(); i++) {
+        sorted_mat.row(i) = mat.row(indexes_and_timestamps[i].first);
+    }
+
+    return sorted_mat;
 }
 
 double wrapTo360(double deg_val) {
