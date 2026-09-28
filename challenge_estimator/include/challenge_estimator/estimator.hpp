@@ -8,6 +8,9 @@ public:
     void ingMagMessage(double net_time, Eigen::Vector3d vals);
     void ingAngMessage(double net_time, Eigen::Vector3d vals);
     void spin(double net_time);
+    bool have_new_mag_meas = false;
+    Eigen::Vector2d getAvgAzEL() {return average_az_el;};
+    Eigen::Vector2d getInstAzEL() {return instant_az_el;};
 private:
     Eigen::MatrixXd mag_meas = Eigen::MatrixXd::Zero(100, 4); // Time, x, y, z
     uint32_t mag_i = 0;
@@ -33,7 +36,6 @@ private:
     Eigen::Vector2d average_az_el = Eigen::Vector2d(0, 0);
     Eigen::Vector2d instant_az_el = Eigen::Vector2d(0, 0);
     double nmag = 0;
-    bool have_new_mag_meas = false;
 
     double interp1MDWL(Eigen::VectorXd x, Eigen::VectorXd y, double xq, bool dounwrap, uint32_t wraprange);
     Eigen::Matrix3d getR(double roll, double pitch, double yaw);
