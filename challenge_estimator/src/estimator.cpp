@@ -1,21 +1,112 @@
 #include <estimator.hpp>
 
 void Estimator::ingMagMessage(double net_time, Eigen::Vector3d vars) {
-
+    /*
+    magi++
+    if magi > max_magi
+        mag_buff_full = true
+        magi = 1
+    mag_meas(magi, :) = [net_time, vals]
+    */
 }
 
 void Estimator::ingAngMessage(double net_time, Eigen::Vector3d vars) {
-
+    /*
+    angi++
+    if angi > max_angi
+        ang_buff_full = true
+        angi = 1
+    ang_meas(angi, :) = [net_time, vals]
+    */
 }
 
 void Estimator::spin(double net_time) {
-
+    /*
+    if net_time > sync_next_t
+        sync_next_t = sync_next_t + (1/sync_freq)
+        if ang_buff_full and mag_buff_full
+            mag_sorted = sortrows(mag_meas, 1, "ascend")
+            ang_sorted = sortrows(ang_meas, 1, "ascend")
+            interp_time = net_time - sync_delay
+            mag_loc_i++
+            mag_interp = [interp1MDWL(mag_sorted[:, 1], mag_sorted[:, 2], interp_time, false, 360),
+                          interp1MDWL(mag_sorted[:, 1], mag_sorted[:, 3], interp_time, false, 360),
+                          interp1MDWL(mag_sorted[:, 1], mag_sorted[:, 4], interp_time, false, 360)]
+            ang_interp = [interp1MDWL(ang_sorted[:, 1], ang_sorted[:, 2], interp_time, true, 180),
+                          interp1MDWL(ang_sorted[:, 1], ang_sorted[:, 3], interp_time, true, 180),
+                          interp1MDWL(ang_sorted[:, 1], ang_sorted[:, 4], interp_time, true, 180)]
+            mag_loc_meas(mag_loc_i) = [interp_time, interp_ang, mag_interp]
+    
+    have_mag_meas = false
+    if net_time > next_est_time
+        next_est_time = next_est_time + (1/next_est_freq)
+        if mag_loc_i > 10
+            nvals = min(mag_loc_i, est_vals_to_use)
+            Amat = zeros(3*nvals, 6)
+            bmat = zeros(3*nvals, 1)
+            istart = 2
+            for n=1:nvals
+                iml = ceil(rand*double(mag_loc_i))
+                attval = mag_loc_meas[iml, 2:4]
+                magval = mag_loc_meas[iml, 5:7]
+                [Rb2l, ~] = getR(attval[1], attval[2], attval[3], 'NED', 'deg')
+                [Rm2b, ~] = getR(0, 0, -90, 'NED', 'deg')
+                netmeg = Rb2l * Rm2b * magval
+                istart += 3
+                Amat[istart:istart+2, :] = [1, 0, 0, Rb2l[1, :]; 0, 1, 0, Rb2l[2, :]; 0, 0, 1, Rb2l[3, :]]
+                bmat[istart:istart+2, 1] = netmeg
+            matsol = inv(Amat.T * Amat) * (Amat.T * bmat)
+            magsol = matsol[1:3]
+            
+            instant_mag_vector = -magsol / norm(magsol)
+            average_mag_vector = (nmag*average_mag_vector + instant_mag_vector) / (nmag + 1)
+            average_mag_vector = average_mag_vector / norm(average_mag_vector)
+            nmag++
+            have_new_mag_measure = true
+            average_az_el = [wrapTo360(atan2d(average_mag_vector[2], average_mag_vector[1])); atand(average_mag_vector[3]/norm(average_mag_vector[1:2]))]
+            instant_az_el = [wrapTo360(atan2d(instant_mag_vector[2], instant_mag_vector[1])); atand(instant_mag_vector[3]/norm(instant_mag_vector[1:2]))]
+    */
 }
 
 double Estimator::interp1MDWL(Eigen::MatrixXd x, Eigen::MatrixXd y, double xq, bool dounwrap, uint32_t wraprange, std::string varargin) {
-
+    /*
+    if xq < min(x) || isscalar(x)
+        yq = y[1]
+    elif xq > max(x)
+        yq = y[-1]
+    else
+        if dounwrap
+            y1 = y
+            cumulative_shift = 0
+            for i=2:len(y)
+                jump = y[i] - y[i-1]
+                if abs(jump) > wraprange
+                    shift_count = floor(abs(jump/wraprange)) * sign(jump)
+                    cumulative_shift = cumulative_shift - (shift_count * wraprange)
+                y1[i] = y[i] + cumulative_shift
+        else
+            y1 = y
+        
+        yq = interp1(x, y1, xq, varargin)
+    */
 }
 
 std::array<Eigen::Matrix3d, 2> Estimator::getR(double roll, double pitch, double yaw, std::string frame, std::string units) {
+    /*
+    if units == 'deg'
+        roll = roll * pi/180
+        pitch = pitch * pi/180
+        yaw = yaw * pi/180
+    if frame == 'ENU'
+        pitch = -pitch
+        yaw = (pi/2)-yaw
     
+    Rx = [1, 0, 0; 0, cos(roll), -sin(roll); 0, sin(roll), cos(roll)]
+    Ry = [cos(pitch), 0, sin(pitch); 0, 1, 0; sin(-pitch), 0, cos(pitch)]
+    Rz = [cos(yaw), -sin(yaw), 0; sin(yaw), cos(yaw), 0; 0, 0, 1]
+
+    R = Rx * Ry * Rz
+    Rinv = inv(R)
+    return [R, Rinv]
+    */
 }
