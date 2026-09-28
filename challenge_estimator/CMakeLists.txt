@@ -10,11 +10,11 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(challenge_interfaces REQUIRED)
 
-add_executable(estimator src/estimator.cpp)
-ament_target_dependencies(estimator rclcpp challenge_interfaces)
+add_executable(estimator_node src/estimator_node.cpp)
+ament_target_dependencies(estimator_node rclcpp challenge_interfaces)
 
 install(
-  TARGETS estimator
+  TARGETS estimator_node
   DESTINATION lib/${PROJECT_NAME}
 )
 
