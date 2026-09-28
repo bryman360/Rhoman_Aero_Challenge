@@ -11,13 +11,13 @@ void Estimator::ingMagMessage(double net_time, Eigen::Vector3d vars) {
 }
 
 void Estimator::ingAngMessage(double net_time, Eigen::Vector3d vars) {
-    /*
-    angi++
-    if angi > max_angi
-        ang_buff_full = true
-        angi = 1
-    ang_meas(angi, :) = [net_time, vals]
-    */
+    if (ang_i >= max_ang_i) {
+        ang_buff_full = true;
+        ang_i = 0;
+    }
+    Eigen::RowVector4d new_row_data = Eigen::RowVector4d(net_time, vars[0], vars[1], vars[2]);
+    ang_meas.row(ang_i) = new_row_data;
+    ang_i++;
 }
 
 void Estimator::spin(double net_time) {
@@ -93,22 +93,22 @@ double Estimator::interp1MDWL(Eigen::MatrixXd x, Eigen::MatrixXd y, double xq, b
 }
 
 std::array<Eigen::Matrix3d, 2> Estimator::getR(double roll, double pitch, double yaw, std::string frame, std::string units) {
-    /*
-    if units == 'deg'
-        roll = roll * pi/180
-        pitch = pitch * pi/180
-        yaw = yaw * pi/180
-    if frame == 'ENU'
-        pitch = -pitch
-        yaw = (pi/2)-yaw
-    
-    Rx = [1, 0, 0; 0, cos(roll), -sin(roll); 0, sin(roll), cos(roll)]
-    Ry = [cos(pitch), 0, sin(pitch); 0, 1, 0; sin(-pitch), 0, cos(pitch)]
-    Rz = [cos(yaw), -sin(yaw), 0; sin(yaw), cos(yaw), 0; 0, 0, 1]
+    Eigen::Matrix3d Rx, Ry, Rz;
 
-    R = Rx * Ry * Rz
-    Rinv = inv(R)
-    return [R, Rinv]
-    */
-   return {Eigen::Matrix3d::Zero(), Eigen::Matrix3d::Zero()};
+    roll = roll * M_PI/180;
+    pitch = pitch * M_PI/180;
+    yaw = yaw * M_PI/180;
+
+    Rx << 1, 0, 0,
+          0, cos(roll), -sin(roll),
+          0, sin(roll), cos(roll);
+    Ry << cos(pitch), 0, sin(pitch),
+          0, 1, 0,
+          sin(-pitch), 0, cos(pitch);
+    Rz << cos(yaw), -sin(yaw), 0,
+          sin(yaw), cos(yaw), 0,
+          0, 0, 1;
+    
+    Eigen::Matrix3d R = Rx * Ry * Rz;
+    return {R, R.inverse()};
 }
