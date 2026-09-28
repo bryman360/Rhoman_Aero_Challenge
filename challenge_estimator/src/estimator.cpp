@@ -68,7 +68,7 @@ void Estimator::spin(double net_time) {
     */
 }
 
-double Estimator::interp1MDWL(Eigen::MatrixXd x, Eigen::MatrixXd y, double xq, bool dounwrap, uint32_t wraprange, std::string varargin) {
+double Estimator::interp1MDWL(Eigen::MatrixXd x, Eigen::MatrixXd y, double xq, bool dounwrap, uint32_t wraprange) {
     /*
     if xq < min(x) || isscalar(x)
         yq = y[1]
