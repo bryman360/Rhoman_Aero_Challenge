@@ -1,8 +1,6 @@
 import rclpy
 from rclpy.node import Node
-from rclpy.executors import MultiThreadedExecutor
-from rclpy.callback_groups import MutuallyExclusiveCallbackGroup
-from challenge_interfaces.msg import AngTimestamped, MagTimestamped
+from challenge_interfaces.msg import AngTimestamped, MagTimestamped, AziEleTimestamped
 
 import numpy as np
 import csv
@@ -16,12 +14,18 @@ class MonitoringNode(Node):
         self.declare_parameter("output_dir", "/home/bryman360/csv_files")
         self.mag_subscription = self.create_subscription(MagTimestamped, "sensor_mag_ts", self.mag_subscription_callback, 10)
         self.ang_subscription = self.create_subscription(AngTimestamped, "vehicle_ang_ts", self.ang_subscription_callback, 10)
-        self.estimator_subscription = self.create_subscription(MagTimestamped, "estimator_vals_ts", self.estimator_subscription_callback, 10)
+        self.estimator_subscription = self.create_subscription(AziEleTimestamped, "azi_ele_ts", self.estimator_subscription_callback, 10)
 
         self.mag_timestamps = np.array([], dtype=np.uint32)
         self.ang_timestamps = np.array([], dtype=np.uint32)
         self.mag_data = None
         self.ang_data = None
+
+        self.azi_ele_timestamps = np.array([], dtype=np.uint32)
+        self.azi_avg_data = np.array([], dtype=np.float64)
+        self.azi_inst_data = np.array([], dtype=np.float64)
+        self.ele_avg_data = np.array([], dtype=np.float64)
+        self.ele_inst_data = np.array([], dtype=np.float64)
 
         self.output_dir = str(self.get_parameter("output_dir").value)
         self.lock = threading.Lock()
@@ -31,9 +35,19 @@ class MonitoringNode(Node):
             header_line = ["Time", "Mag X", "Mag Y", "Mag Z"]
             csv_writer.writerow(header_line)
 
-        with open(self.output_dir + "/attitude_converted_to_rollpitchyaw.csv", "w", newline="", encoding="utf-8") as mag_file:
-            csv_writer = csv.writer(mag_file)
+        with open(self.output_dir + "/attitude_converted_to_rollpitchyaw.csv", "w", newline="", encoding="utf-8") as ang_file:
+            csv_writer = csv.writer(ang_file)
             header_line = ["Time", "Roll Deg", "Pitch Deg", "Yaw Deg"]
+            csv_writer.writerow(header_line)
+
+        with open(self.output_dir + "/azimuth_average_and_instant_values.csv", "w", newline="", encoding="utf-8") as azi_file:
+            csv_writer = csv.writer(azi_file)
+            header_line = ["Time", "Azimuth Avg Deg", "Azimuth Instant Deg"]
+            csv_writer.writerow(header_line)
+
+        with open(self.output_dir + "/elevation_average_and_instant_values.csv", "w", newline="", encoding="utf-8") as ele_file:
+            csv_writer = csv.writer(ele_file)
+            header_line = ["Time", "Elevation Avg Deg", "Elevation Instant Deg"]
             csv_writer.writerow(header_line)
 
         self.get_logger().info("Monitoring is ready.")
@@ -64,8 +78,22 @@ class MonitoringNode(Node):
             else:
                 self.ang_data = np.array([[msg.roll, msg.pitch, msg.yaw]], dtype=np.float32)
 
-    def estimator_subscription_callback(self, msg: MagTimestamped):
-        pass
+    def estimator_subscription_callback(self, msg: AziEleTimestamped):
+
+        with open(self.output_dir + "/azimuth_average_and_instant_values.csv", "w", newline="", encoding="utf-8") as azi_file:
+            csv_writer = csv.writer(azi_file)
+            csv_writer.writerow([msg.timestamp, msg.average_azimuth, msg.instant_azimuth])
+        with open(self.output_dir + "/elevation_average_and_instant_values.csv", "w", newline="", encoding="utf-8") as ele_file:
+            csv_writer = csv.writer(ele_file)
+            csv_writer.writerow([msg.timestamp, msg.average_elevation, msg.instant_elevation])
+        with self.lock:
+            self.azi_ele_timestamps = np.append(self.azi_ele_timestamps, msg.timestamp)
+            self.azi_avg_data = np.append(self.azi_avg_data, msg.average_azimuth * 180 / np.pi)
+            self.azi_inst_data = np.append(self.azi_inst_data, msg.instant_azimuth * 180 / np.pi)
+            self.ele_avg_data = np.append(self.ele_avg_data, msg.average_elevation * 180 / np.pi)
+            self.ele_inst_data = np.append(self.ele_inst_data, msg.instant_elevation * 180 / np.pi)
+            print(msg.average_elevation * 180 / np.pi)
+        
         
 
 
@@ -114,16 +142,17 @@ def main(args=None):
     azi_subplot.set_xlabel('Flight Time [s]')
     azi_subplot.set_ylabel('Degrees East')
     azi_subplot.set_title('Estimated Instantaneous/Average Magnetic Field Azimuth (green/black)')
-    azi_subplot.set_ylim(0, 20)
+    # azi_subplot.set_ylim(0, 20)
     
     ele_inst_pts = azi_subplot.scatter(scaled_ang_ts, [], color='green')
     ele_avg_pts = azi_subplot.scatter(scaled_ang_ts, [], color='black')
     ele_subplot.set_xlabel('Flight Time [s]')
     ele_subplot.set_ylabel('Degrees Down')
     ele_subplot.set_title('Estimated Instantaneous/Average Magnetic Field Elevation (green/black)')
-    ele_subplot.set_ylim(54, 68)
+    # ele_subplot.set_ylim(54, 68)
 
     def update(frame):
+        update_azi_and_ele = False
         with node.lock:
             if node.ang_data is None or node.mag_data is None:
                 return x_line, y_line, z_line, r_line, p_line, yaw_line, azi_inst_pts, azi_avg_pts, ele_inst_pts, ele_avg_pts
@@ -135,6 +164,13 @@ def main(args=None):
             r_data = node.ang_data[:, 0]
             p_data = node.ang_data[:, 1]
             yaw_data = node.ang_data[:, 2]
+            if len(node.azi_ele_timestamps) > 1:
+                update_azi_and_ele = True
+                azi_ele_scaled_ts = node.azi_ele_timestamps / 1000
+                azi_avg_data = [azi_ele_scaled_ts, node.azi_avg_data]
+                azi_inst_data = [azi_ele_scaled_ts, node.azi_inst_data]
+                ele_avg_data = [azi_ele_scaled_ts, node.ele_avg_data]
+                ele_inst_data = [azi_ele_scaled_ts, node.ele_inst_data]
         yaw_data[yaw_data < 0] += 360
 
         x_line.set_data(scaled_mag_ts, x_data)
@@ -149,10 +185,20 @@ def main(args=None):
         yaw_line.set_data(scaled_ang_ts, yaw_data)
         ang_y_subplot.set_xlim(scaled_ang_ts[0], scaled_ang_ts[-1])
 
+        if update_azi_and_ele:
+            azi_avg_pts.set_offsets(azi_avg_data)
+            azi_inst_pts.set_offsets(azi_inst_data)
+            ele_avg_pts.set_offsets(ele_avg_data)
+            ele_inst_pts.set_offsets(ele_inst_data)
+            azi_subplot.set_xlim(azi_ele_scaled_ts[0], azi_ele_scaled_ts[-1])
+            # azi_subplot.set_ylim(np.min(azi_inst_data), np.max(azi_inst_data))
+            ele_subplot.set_xlim(azi_ele_scaled_ts[0], azi_ele_scaled_ts[-1])
+            # ele_subplot.set_ylim(np.min(ele_inst_data), np.max(ele_inst_data))
+
         return x_line, y_line, z_line, r_line, p_line, yaw_line, azi_inst_pts, azi_avg_pts, ele_inst_pts, ele_avg_pts
 
 
-    ani = FuncAnimation(fig, update, interval=500, blit=False)
+    ani = FuncAnimation(fig, update, interval=1000, blit=False)
     plt.tight_layout()
     plt.show()
 
