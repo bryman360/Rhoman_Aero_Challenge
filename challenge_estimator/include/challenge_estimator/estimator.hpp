@@ -27,11 +27,11 @@ private:
 
     double sync_freq = 10;
     double sync_delay = 0.1;
-    double sync_next_t = 0;
+    double sync_next_t = 920;
     Eigen::MatrixXd mag_loc_meas = Eigen::MatrixXd::Zero(100000, 7); // Time, r, p, y, x, y, z
     uint32_t mag_loc_i = 0;
 
-    double next_est_time = 0;
+    double next_est_time = 940;
     double next_est_freq = 1;
     uint32_t est_vals_to_use = 100;
     Eigen::Vector3d average_mag_vector = Eigen::Vector3d(0, 0, 0);
