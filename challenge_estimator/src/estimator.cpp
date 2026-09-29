@@ -62,7 +62,7 @@ void Estimator::spin(double net_time) {
             Eigen::MatrixXd Amat = Eigen::MatrixXd::Zero(3*nvals, 6);
             Eigen::MatrixXd bmat = Eigen::MatrixXd::Zero(3*nvals, 1);
             uint32_t istart = 0;
-            for (int i = 0; i < nvals; i++) {
+            for (int i = 0; i < int(nvals); i++) {
                 uint32_t iml = ceil(random() % mag_loc_i);
                 Eigen::MatrixXd att_ang_val = mag_loc_meas.block(iml, 1, iml, 3);
                 Eigen::MatrixXd mag_val = mag_loc_meas.block(iml, 4, iml, 6);
