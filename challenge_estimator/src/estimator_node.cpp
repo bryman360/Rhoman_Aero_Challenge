@@ -56,7 +56,6 @@ private:
         std::chrono::steady_clock::time_point current_time = std::chrono::steady_clock::now();
         std::chrono::duration<double> time_diff = current_time - last_loop_timestamp;
         double time_diff_s = time_diff.count();
-        RCLCPP_INFO(this->get_logger(), "Current Sim Time: %f, Diff: %f", current_sim_time, time_diff_s);
         current_sim_time += time_diff_s;
         last_loop_timestamp = current_time;
         estimator->spin(current_sim_time);
@@ -70,6 +69,7 @@ private:
             msg.instant_azimuth = instant_az_el[1];
             msg.instant_elevation = instant_az_el[2];
             azi_ele_publisher->publish(msg);
+            estimator->have_new_mag_meas = false;
         }
     }
 };
