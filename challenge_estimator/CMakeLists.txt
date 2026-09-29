@@ -9,7 +9,10 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(challenge_interfaces REQUIRED)
+find_package(eigen3_cmake_module REQUIRED)
 find_package(Eigen3 REQUIRED)
+
+include_directories(include/challenge_estimator)
 
 add_executable(estimator_node src/estimator_node.cpp)
 ament_target_dependencies(estimator_node rclcpp challenge_interfaces Eigen3)
