@@ -26,14 +26,14 @@ private:
     rclcpp::TimerBase::SharedPtr timer;
     EstimatorPtr estimator;
 
-    void mag_subscription_callback(MagTimestamped msg) {
-        Eigen::Vector3d vals(msg.x, msg.y, msg.z);
-        estimator->ingMagMessage(12, vals);
+    void mag_subscription_callback(const MagTimestamped::SharedPtr msg) {
+        Eigen::Vector3d vals = Eigen::Vector3d(msg->x, msg->y, msg->z);
+        estimator->ingAngMessage(msg->timestamp, vals);
     }
 
-    void ang_subscription_callback(AngTimestamped msg) {
-        Eigen::Vector3d vals(msg.roll, msg.pitch, msg.yaw);
-        estimator->ingAngMessage(12, vals);
+    void ang_subscription_callback(const AngTimestamped::SharedPtr msg) {
+        Eigen::Vector3d vals = Eigen::Vector3d(msg->roll, msg->pitch, msg->yaw);
+        estimator->ingAngMessage(msg->timestamp, vals);
     }
 
     void timer_callback() {
