@@ -36,7 +36,7 @@ private:
         if (!first_data_point_seen) {
             first_data_point_seen = true;
             last_loop_timestamp = std::chrono::steady_clock::now();
-            current_sim_time = msg->timestamp;
+            current_sim_time = msg->timestamp / 1000000;
             timer->reset();
         }
     }
@@ -47,7 +47,7 @@ private:
         if (!first_data_point_seen) {
             first_data_point_seen = true;
             last_loop_timestamp = std::chrono::steady_clock::now();
-            current_sim_time = msg->timestamp;
+            current_sim_time = msg->timestamp / 1000000;
             timer->reset();
         }
     }
@@ -56,7 +56,9 @@ private:
         std::chrono::steady_clock::time_point current_time = std::chrono::steady_clock::now();
         std::chrono::duration<double> time_diff = current_time - last_loop_timestamp;
         double time_diff_s = time_diff.count();
+        RCLCPP_INFO(this->get_logger(), "Current Sim Time: %f, Diff: %f", current_sim_time, time_diff_s);
         current_sim_time += time_diff_s;
+        last_loop_timestamp = current_time;
         estimator->spin(current_sim_time);
         if (estimator->have_new_mag_meas) {
             auto msg = AziEleTimestamped();
