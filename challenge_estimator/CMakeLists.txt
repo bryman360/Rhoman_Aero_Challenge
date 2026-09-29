@@ -14,7 +14,7 @@ find_package(Eigen3 REQUIRED)
 
 include_directories(include/challenge_estimator)
 
-add_executable(estimator_node src/estimator_node.cpp)
+add_executable(estimator_node src/estimator_node.cpp src/estimator.cpp)
 ament_target_dependencies(estimator_node rclcpp challenge_interfaces Eigen3)
 
 install(
