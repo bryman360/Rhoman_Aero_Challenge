@@ -92,8 +92,6 @@ class MonitoringNode(Node):
             self.azi_inst_data = np.append(self.azi_inst_data, msg.instant_azimuth * 180 / np.pi)
             self.ele_avg_data = np.append(self.ele_avg_data, msg.average_elevation * 180 / np.pi)
             self.ele_inst_data = np.append(self.ele_inst_data, msg.instant_elevation * 180 / np.pi)
-            print(msg.average_elevation * 180 / np.pi)
-        
         
 
 
@@ -137,19 +135,19 @@ def main(args=None):
     ang_y_subplot.set_title('Yaw')
     ang_y_subplot.set_ylim(0, 400)
 
-    azi_inst_pts = azi_subplot.scatter(scaled_ang_ts, [], color='green')
-    azi_avg_pts = azi_subplot.scatter(scaled_ang_ts, [], color='black')
+    azi_inst_pts = azi_subplot.scatter([], [], color='green')
+    azi_avg_pts = azi_subplot.scatter([], [], color='black')
     azi_subplot.set_xlabel('Flight Time [s]')
     azi_subplot.set_ylabel('Degrees East')
     azi_subplot.set_title('Estimated Instantaneous/Average Magnetic Field Azimuth (green/black)')
-    # azi_subplot.set_ylim(0, 20)
+    azi_subplot.set_ylim(0, 20)
     
-    ele_inst_pts = azi_subplot.scatter(scaled_ang_ts, [], color='green')
-    ele_avg_pts = azi_subplot.scatter(scaled_ang_ts, [], color='black')
+    ele_inst_pts = ele_subplot.scatter([], [], color='green')
+    ele_avg_pts = ele_subplot.scatter([], [], color='black')
     ele_subplot.set_xlabel('Flight Time [s]')
     ele_subplot.set_ylabel('Degrees Down')
     ele_subplot.set_title('Estimated Instantaneous/Average Magnetic Field Elevation (green/black)')
-    # ele_subplot.set_ylim(54, 68)
+    ele_subplot.set_ylim(54, 68)
 
     def update(frame):
         update_azi_and_ele = False
@@ -167,10 +165,10 @@ def main(args=None):
             if len(node.azi_ele_timestamps) > 1:
                 update_azi_and_ele = True
                 azi_ele_scaled_ts = node.azi_ele_timestamps / 1000
-                azi_avg_data = [azi_ele_scaled_ts, node.azi_avg_data]
-                azi_inst_data = [azi_ele_scaled_ts, node.azi_inst_data]
-                ele_avg_data = [azi_ele_scaled_ts, node.ele_avg_data]
-                ele_inst_data = [azi_ele_scaled_ts, node.ele_inst_data]
+                azi_avg_data = node.azi_avg_data
+                azi_inst_data = node.azi_inst_data
+                ele_avg_data = node.ele_avg_data
+                ele_inst_data = node.ele_inst_data
         yaw_data[yaw_data < 0] += 360
 
         x_line.set_data(scaled_mag_ts, x_data)
@@ -186,14 +184,16 @@ def main(args=None):
         ang_y_subplot.set_xlim(scaled_ang_ts[0], scaled_ang_ts[-1])
 
         if update_azi_and_ele:
-            azi_avg_pts.set_offsets(azi_avg_data)
-            azi_inst_pts.set_offsets(azi_inst_data)
-            ele_avg_pts.set_offsets(ele_avg_data)
-            ele_inst_pts.set_offsets(ele_inst_data)
+            azi_avg_packed_pts = np.vstack((azi_ele_scaled_ts, azi_avg_data))
+            azi_inst_packed_pts = np.vstack((azi_ele_scaled_ts, azi_inst_data))
+            ele_avg_packed_pts = np.vstack((azi_ele_scaled_ts, ele_avg_data))
+            ele_inst_packed_pts = np.vstack((azi_ele_scaled_ts, ele_inst_data))
+            azi_avg_pts.set_offsets(azi_avg_packed_pts.T)
+            azi_inst_pts.set_offsets(azi_inst_packed_pts.T)
             azi_subplot.set_xlim(azi_ele_scaled_ts[0], azi_ele_scaled_ts[-1])
-            # azi_subplot.set_ylim(np.min(azi_inst_data), np.max(azi_inst_data))
+            ele_avg_pts.set_offsets(ele_avg_packed_pts.T)
+            ele_inst_pts.set_offsets(ele_inst_packed_pts.T)
             ele_subplot.set_xlim(azi_ele_scaled_ts[0], azi_ele_scaled_ts[-1])
-            # ele_subplot.set_ylim(np.min(ele_inst_data), np.max(ele_inst_data))
 
         return x_line, y_line, z_line, r_line, p_line, yaw_line, azi_inst_pts, azi_avg_pts, ele_inst_pts, ele_avg_pts
 
