@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Eigen/Dense>
+#include <memory>
 
 class Estimator {
 public:
@@ -11,6 +12,8 @@ public:
     bool have_new_mag_meas = false;
     Eigen::Vector3d getAvgAzEL() {return average_az_el;};
     Eigen::Vector3d getInstAzEL() {return instant_az_el;};
+    Eigen::MatrixXd getMagVals() {return mag_meas;}
+    Eigen::MatrixXd getAngVals() {return ang_meas;}
 private:
     Eigen::MatrixXd mag_meas = Eigen::MatrixXd::Zero(100, 4); // Time, x, y, z
     uint32_t mag_i = 0;
@@ -38,3 +41,13 @@ private:
     double nmag = 0;
 };
 
+class EstimatorPtr {
+public:
+    EstimatorPtr() {};
+    EstimatorPtr(std::shared_ptr<Estimator> ptr) : sharedPtr(ptr){};
+    ~EstimatorPtr() {sharedPtr.reset();};
+    std::shared_ptr<Estimator> operator->() {return sharedPtr;}
+    void operator=(std::shared_ptr<Estimator> new_ptr) {sharedPtr=new_ptr;}
+private:
+    std::shared_ptr<Estimator> sharedPtr;
+};

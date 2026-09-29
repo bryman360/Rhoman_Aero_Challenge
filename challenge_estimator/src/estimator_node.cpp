@@ -1,4 +1,5 @@
 #include <rclcpp/rclcpp.hpp>
+#include <estimator.hpp>
 #include <challenge_interfaces/msg/mag_timestamped.hpp>
 #include <challenge_interfaces/msg/ang_timestamped.hpp>
 #include <challenge_interfaces/msg/azi_ele_timestamped.hpp>
@@ -11,6 +12,8 @@ using namespace std::placeholders;
 class EstimatorNode : public rclcpp::Node {
 public:
     EstimatorNode(std::string name) : Node(name) {
+        estimator = std::make_shared<Estimator>();
+        this->declare_parameter("spin_rate", 10000);
         mag_subscription = this->create_subscription<MagTimestamped>("sensor_mag_ts", 10, std::bind(&EstimatorNode::mag_subscription_callback, this, _1));
         ang_subscription = this->create_subscription<AngTimestamped>("vehicle_ang_ts", 10, std::bind(&EstimatorNode::ang_subscription_callback, this, _1));
         azi_ele_publisher = this->create_publisher<AziEleTimestamped>("azi_ele_ts", 10);
@@ -21,14 +24,20 @@ private:
     rclcpp::Subscription<AngTimestamped>::SharedPtr ang_subscription;
     rclcpp::Publisher<AziEleTimestamped>::SharedPtr azi_ele_publisher;
     rclcpp::TimerBase::SharedPtr timer;
+    EstimatorPtr estimator;
 
     void mag_subscription_callback(MagTimestamped msg) {
+        Eigen::Vector3d vals(msg.x, msg.y, msg.z);
+        estimator->ingMagMessage(12, vals);
     }
 
     void ang_subscription_callback(AngTimestamped msg) {
+        Eigen::Vector3d vals(msg.roll, msg.pitch, msg.yaw);
+        estimator->ingAngMessage(12, vals);
     }
 
     void timer_callback() {
+        rclcpp::Rate loop_rate(1 / 10000);
     }
 };
 
