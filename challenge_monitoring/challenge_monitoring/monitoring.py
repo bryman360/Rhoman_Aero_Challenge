@@ -88,10 +88,10 @@ class MonitoringNode(Node):
             csv_writer.writerow([msg.timestamp, msg.average_elevation, msg.instant_elevation])
         with self.lock:
             self.azi_ele_timestamps = np.append(self.azi_ele_timestamps, msg.timestamp)
-            self.azi_avg_data = np.append(self.azi_avg_data, msg.average_azimuth * 180 / np.pi)
-            self.azi_inst_data = np.append(self.azi_inst_data, msg.instant_azimuth * 180 / np.pi)
-            self.ele_avg_data = np.append(self.ele_avg_data, msg.average_elevation * 180 / np.pi)
-            self.ele_inst_data = np.append(self.ele_inst_data, msg.instant_elevation * 180 / np.pi)
+            self.azi_avg_data = np.append(self.azi_avg_data, msg.average_azimuth)
+            self.azi_inst_data = np.append(self.azi_inst_data, msg.instant_azimuth)
+            self.ele_avg_data = np.append(self.ele_avg_data, msg.average_elevation)
+            self.ele_inst_data = np.append(self.ele_inst_data, msg.instant_elevation)
         
 
 
@@ -164,7 +164,7 @@ def main(args=None):
             yaw_data = node.ang_data[:, 2]
             if len(node.azi_ele_timestamps) > 1:
                 update_azi_and_ele = True
-                azi_ele_scaled_ts = node.azi_ele_timestamps / 1000
+                azi_ele_scaled_ts = node.azi_ele_timestamps / 1000000
                 azi_avg_data = node.azi_avg_data
                 azi_inst_data = node.azi_inst_data
                 ele_avg_data = node.ele_avg_data
