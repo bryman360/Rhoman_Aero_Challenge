@@ -5,7 +5,6 @@ double interp1(Eigen::VectorXd x, Eigen::VectorXd y, double xq);
 Eigen::Matrix3d getR(double roll, double pitch, double yaw);
 Eigen::MatrixXd sortMatrixByCol(Eigen::MatrixXd mat, uint32_t col);
 double wrapTo360(double deg_val);
-// TODO: interp1
 
 void Estimator::ingMagMessage(double net_time, Eigen::Vector3d vars) {
     if (mag_i >= max_mag_i) {
@@ -44,7 +43,7 @@ void Estimator::spin(double net_time) {
                 interp1MDWL(ang_sorted.col(0), ang_sorted.col(2), interp_time, true, 180),
                 interp1MDWL(ang_sorted.col(0), ang_sorted.col(3), interp_time, true, 180)
             );
-            Eigen::RowVectorXd mag_loc_meas_row_data;
+            Eigen::RowVectorXd mag_loc_meas_row_data = Eigen::RowVectorXd::Zero(7);
             mag_loc_meas_row_data <<
                 interp_time,
                 ang_interp[0], ang_interp[1], ang_interp[2],
@@ -64,18 +63,18 @@ void Estimator::spin(double net_time) {
             uint32_t istart = 0;
             for (int i = 0; i < int(nvals); i++) {
                 uint32_t iml = ceil(random() % mag_loc_i);
-                Eigen::MatrixXd att_ang_val = mag_loc_meas.block(iml, 1, iml, 3);
-                Eigen::MatrixXd mag_val = mag_loc_meas.block(iml, 4, iml, 6);
+                Eigen::MatrixXd att_ang_val = mag_loc_meas.block(iml, 1, 1, 3);
+                Eigen::MatrixXd mag_val = mag_loc_meas.block(iml, 4, 1, 3);
                 Eigen::Matrix3d Rb2l = getR(att_ang_val(0, 0), att_ang_val(0, 1), att_ang_val(0, 2));
                 Eigen::Matrix3d Rm2b = getR(0, 0, -90);
-                Eigen::MatrixXd net_mag = Rb2l * Rm2b * mag_val;
+                Eigen::MatrixXd net_mag = Rb2l * Rm2b * mag_val.transpose();
 
                 Amat.row(istart)   << 1, 0, 0, Rb2l(0, 0), Rb2l(0, 1), Rb2l(0, 2);
                 Amat.row(istart+1) << 0, 1, 0, Rb2l(1, 0), Rb2l(1, 1), Rb2l(1, 2);
                 Amat.row(istart+2) << 0, 0, 1, Rb2l(2, 0), Rb2l(2, 1), Rb2l(2, 2);
-                bmat(istart, 0)   = net_mag(0, 0);
-                bmat(istart+1, 0) = net_mag(0, 1);
-                bmat(istart+2, 0) = net_mag(0, 2);
+                bmat(istart, 0)   = net_mag(0);
+                bmat(istart+1, 0) = net_mag(1);
+                bmat(istart+2, 0) = net_mag(2);
                 istart += 3;
             }
 
@@ -87,6 +86,7 @@ void Estimator::spin(double net_time) {
             average_mag_vector = average_mag_vector / average_mag_vector.norm();
             nmag++;
 
+            have_new_mag_meas = true;
             average_az_el << net_time, wrapTo360(std::atan2(average_mag_vector[1], average_mag_vector[0])), std::atan(average_mag_vector[2]/average_mag_vector.segment(0, 2).norm());
             instant_az_el << net_time, wrapTo360(std::atan2(instant_mag_vector[1], instant_mag_vector[0])), std::atan(instant_mag_vector[2]/instant_mag_vector.segment(0, 2).norm());
         }
