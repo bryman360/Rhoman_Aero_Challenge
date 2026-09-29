@@ -27,16 +27,16 @@ private:
     rclcpp::TimerBase::SharedPtr timer;
     EstimatorPtr estimator;
     bool first_data_point_seen = false;
-    std::chrono::steady_clock::time_point last_loop_timestamp;
-    double current_sim_time;
+    std::chrono::steady_clock::time_point last_loop_chrono_timestamp;
+    double current_sim_time_s;
 
     void mag_subscription_callback(const MagTimestamped::SharedPtr msg) {
         Eigen::Vector3d vals = Eigen::Vector3d(msg->x, msg->y, msg->z);
         estimator->ingMagMessage(msg->timestamp, vals);
         if (!first_data_point_seen) {
             first_data_point_seen = true;
-            last_loop_timestamp = std::chrono::steady_clock::now();
-            current_sim_time = msg->timestamp / 1000000;
+            last_loop_chrono_timestamp = std::chrono::steady_clock::now();
+            current_sim_time_s = msg->timestamp / 1000000;
             timer->reset();
         }
     }
@@ -46,19 +46,20 @@ private:
         estimator->ingAngMessage(msg->timestamp, vals);
         if (!first_data_point_seen) {
             first_data_point_seen = true;
-            last_loop_timestamp = std::chrono::steady_clock::now();
-            current_sim_time = msg->timestamp / 1000000;
+            last_loop_chrono_timestamp = std::chrono::steady_clock::now();
+            current_sim_time_s = msg->timestamp / 1000000;
             timer->reset();
         }
     }
 
     void timer_callback() {
-        std::chrono::steady_clock::time_point current_time = std::chrono::steady_clock::now();
-        std::chrono::duration<double> time_diff = current_time - last_loop_timestamp;
-        double time_diff_s = time_diff.count();
-        current_sim_time += time_diff_s;
-        last_loop_timestamp = current_time;
-        estimator->spin(current_sim_time);
+        std::chrono::steady_clock::time_point current_chrono_timestamp = std::chrono::steady_clock::now();
+        std::chrono::duration<double> chrono_time_diff = current_chrono_timestamp - last_loop_chrono_timestamp;
+        last_loop_chrono_timestamp = current_chrono_timestamp;
+
+        double time_diff_s = chrono_time_diff.count();
+        current_sim_time_s += time_diff_s;
+        estimator->spin(current_sim_time_s);
         if (estimator->have_new_mag_meas) {
             auto msg = AziEleTimestamped();
             Eigen::Vector3d avg_az_el = estimator->getAvgAzEL();

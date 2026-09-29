@@ -1,4 +1,5 @@
 #include <estimator.hpp>
+#include <iostream>
 
 double interp1MDWL(Eigen::VectorXd x, Eigen::VectorXd y, double xq, bool dounwrap, uint32_t wraprange);
 double interp1(Eigen::VectorXd x, Eigen::VectorXd y, double xq);
@@ -26,26 +27,26 @@ void Estimator::ingAngMessage(double net_time, Eigen::Vector3d vars) {
     ang_i++;
 }
 
-void Estimator::spin(double net_time) {
-    if (net_time > sync_next_t) {
-        sync_next_t += (1 / sync_freq);
+void Estimator::spin(double net_time_s) {
+    if (net_time_s > sync_next_t_s) {
+        sync_next_t_s += (1 / sync_freq);
         if (ang_buff_full && mag_buff_full) {
             Eigen::MatrixXd mag_sorted = sortMatrixByCol(mag_meas, 0);
             Eigen::MatrixXd ang_sorted = sortMatrixByCol(ang_meas, 0);
-            double interp_time = net_time - sync_delay;
+            double interp_time_us = (net_time_s - sync_delay) * 1000000;
             Eigen::Vector3d mag_interp = Eigen::Vector3d(
-                interp1MDWL(mag_sorted.col(0), mag_sorted.col(1), interp_time, false, 360),
-                interp1MDWL(mag_sorted.col(0), mag_sorted.col(2), interp_time, false, 360),
-                interp1MDWL(mag_sorted.col(0), mag_sorted.col(3), interp_time, false, 360)
+                interp1MDWL(mag_sorted.col(0), mag_sorted.col(1), interp_time_us, false, 360),
+                interp1MDWL(mag_sorted.col(0), mag_sorted.col(2), interp_time_us, false, 360),
+                interp1MDWL(mag_sorted.col(0), mag_sorted.col(3), interp_time_us, false, 360)
             );
             Eigen::Vector3d ang_interp = Eigen::Vector3d(
-                interp1MDWL(ang_sorted.col(0), ang_sorted.col(1), interp_time, true, 180),
-                interp1MDWL(ang_sorted.col(0), ang_sorted.col(2), interp_time, true, 180),
-                interp1MDWL(ang_sorted.col(0), ang_sorted.col(3), interp_time, true, 180)
+                interp1MDWL(ang_sorted.col(0), ang_sorted.col(1), interp_time_us, true, 180),
+                interp1MDWL(ang_sorted.col(0), ang_sorted.col(2), interp_time_us, true, 180),
+                interp1MDWL(ang_sorted.col(0), ang_sorted.col(3), interp_time_us, true, 180)
             );
             Eigen::RowVectorXd mag_loc_meas_row_data = Eigen::RowVectorXd::Zero(7);
             mag_loc_meas_row_data <<
-                interp_time,
+                interp_time_us,
                 ang_interp[0], ang_interp[1], ang_interp[2],
                 mag_interp[0], mag_interp[1], mag_interp[2];
             mag_loc_meas.row(mag_loc_i) = mag_loc_meas_row_data;
@@ -54,8 +55,8 @@ void Estimator::spin(double net_time) {
     }
 
     have_new_mag_meas = false;
-    if (net_time > next_est_time) {
-        next_est_time += (1 / next_est_freq);
+    if (net_time_s > next_est_time_s) {
+        next_est_time_s += (1 / next_est_freq);
         if (mag_loc_i >= 10) {
             uint32_t nvals = std::min(mag_loc_i, est_vals_to_use);
             Eigen::MatrixXd Amat = Eigen::MatrixXd::Zero(3*nvals, 6);
@@ -87,14 +88,14 @@ void Estimator::spin(double net_time) {
             nmag++;
 
             have_new_mag_meas = true;
-            average_az_el << net_time, wrapTo360(std::atan2(average_mag_vector[1], average_mag_vector[0])), std::atan(average_mag_vector[2]/average_mag_vector.segment(0, 2).norm());
-            instant_az_el << net_time, wrapTo360(std::atan2(instant_mag_vector[1], instant_mag_vector[0])), std::atan(instant_mag_vector[2]/instant_mag_vector.segment(0, 2).norm());
+            average_az_el << net_time_s * 1000000, wrapTo360(std::atan2(average_mag_vector[1], average_mag_vector[0]) * 180/M_PI), std::atan(average_mag_vector[2]/average_mag_vector.segment(0, 2).norm()) * 180/M_PI;
+            instant_az_el << net_time_s * 1000000, wrapTo360(std::atan2(instant_mag_vector[1], instant_mag_vector[0]) * 180/M_PI), std::atan(instant_mag_vector[2]/instant_mag_vector.segment(0, 2).norm()) * 180/M_PI;
         }
     }
 }
 
 double interp1MDWL(Eigen::VectorXd x, Eigen::VectorXd y, double xq, bool dounwrap, uint32_t wraprange) {
-    if (xq < x.minCoeff()) {
+    if (xq < x.minCoeff() || x.size() == 1) {
         return y[0];
     } else if (xq > x.maxCoeff()) {
         return y[y.size() - 1];
@@ -171,11 +172,17 @@ Eigen::MatrixXd sortMatrixByCol(Eigen::MatrixXd mat, uint32_t col) {
 }
 
 double wrapTo360(double deg_val) {
-    while (deg_val > 360) {
+    while (deg_val >= 360) {
         deg_val -= 360;
+        if (abs(deg_val) < 0.0000001) {
+            return 0.0;
+        } 
     }
     while (deg_val < 0) {
         deg_val += 360;
+        if (abs(deg_val) < 0.0000001) {
+            return 0.0;
+        } 
     }
     return deg_val;
 }
