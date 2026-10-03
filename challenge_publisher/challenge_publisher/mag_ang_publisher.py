@@ -36,9 +36,12 @@ def convert_quaternion_to_rpy(w: np.float64, x: np.float64, y: np.float64, z: np
 class MagAngPublisherNode(Node):
     def __init__(self, name):
         super().__init__(name)
+        self.declare_parameter("start_time_s", -1)
+        self.declare_parameter("log_path", '/home/bryman360/Downloads/04_13_03.ulg')
+        log_path = self.get_parameter("log_path").value
         self.ang_publisher_ = self.create_publisher(AngTimestamped, "vehicle_ang_ts", 10)
         self.mag_publisher_ = self.create_publisher(MagTimestamped, "sensor_mag_ts", 10)
-        self.mag_data_, self.att_data_ = get_mag_and_att_values_from_ulog('/home/bryman360/Downloads/04_13_03.ulg')
+        self.mag_data_, self.att_data_ = get_mag_and_att_values_from_ulog(log_path)
         self.get_logger().info("Publisher node ready.")
         self.spin()
 
@@ -46,6 +49,7 @@ class MagAngPublisherNode(Node):
     def spin(self):
         if not self.mag_data_ and not self.att_data_:
             self.get_logger().error("No Magnetometer Data or Attitude data loaded in. Exiting.")
+            self.destroy_node()
             return
 
         mag_i = 0
@@ -63,11 +67,23 @@ class MagAngPublisherNode(Node):
         att_q3 = self.att_data_['q[3]']
 
         self.get_logger().info("About to begin publishing data")
-        
-        sim_time_ns = min(att_ts[0], mag_ts[0]) - 1000000000
+
+        start_time_param = self.get_parameter("start_time_s").value
+        if not start_time_param or start_time_param < 0:
+            sim_time_ns = min(att_ts[0], mag_ts[0]) - 1000000000
+        else:
+            sim_time_ns = start_time_param * 1000000000
+            while att_ts[att_i] < sim_time_ns:
+                att_i += 1
+                if att_i >= len(att_ts):
+                    self.get_logger().warn("Starting time is after all flight log samples for Att")
+            while mag_ts[mag_i] < sim_time_ns:
+                mag_i += 1
+                if mag_i >= len(mag_ts):
+                    self.get_logger().warn("Starting time is after all flight log samples for Mag")
         last_real_time_ns = time.time_ns()
 
-        self.get_logger().info(f"Starting at {sim_time_ns}, first should be at {min(att_ts[0], mag_ts[0])}")
+        self.get_logger().info(f"Starting at {sim_time_ns}, first should be at {min(att_ts[att_i], mag_ts[mag_i])}")
         while att_i < len(att_ts) or mag_i < len(mag_ts):
             current_real_time_ns = time.time_ns()
             delta_ns = current_real_time_ns - last_real_time_ns
@@ -93,6 +109,8 @@ class MagAngPublisherNode(Node):
                 mag_i += 1
 
             last_real_time_ns = current_real_time_ns
+        self.get_logger().info("Finished publishing flight log")
+        self.destroy_node()
 
 
 def main(args=None):
