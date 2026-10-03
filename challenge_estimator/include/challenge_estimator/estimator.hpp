@@ -10,8 +10,8 @@ public:
     void ingAngMessage(double net_time, Eigen::Vector3d vals);
     void spin(double net_time);
     bool have_new_mag_meas = false;
-    Eigen::Vector3d getAvgAzEL() {return average_az_el;};
-    Eigen::Vector3d getInstAzEL() {return instant_az_el;};
+    Eigen::Vector2d getAvgAzEL() {return average_az_el;};
+    Eigen::Vector2d getInstAzEL() {return instant_az_el;};
     Eigen::MatrixXd getMagVals() {return mag_meas;}
     Eigen::MatrixXd getAngVals() {return ang_meas;}
 private:
@@ -26,7 +26,7 @@ private:
     bool ang_buff_full = false;
 
     double sync_freq = 10;
-    double sync_delay = 0.1;
+    double sync_delay_s = 0.1;
     double sync_next_t_s = 920;
     Eigen::MatrixXd mag_loc_meas = Eigen::MatrixXd::Zero(100000, 7); // Time, r, p, y, x, y, z
     uint32_t mag_loc_i = 0;
@@ -36,8 +36,8 @@ private:
     uint32_t est_vals_to_use = 100;
     Eigen::Vector3d average_mag_vector = Eigen::Vector3d(0, 0, 0);
     Eigen::Vector3d instant_mag_vector = Eigen::Vector3d(0, 0, 0);
-    Eigen::Vector3d average_az_el = Eigen::Vector3d(0, 0, 0); // Time, az, el
-    Eigen::Vector3d instant_az_el = Eigen::Vector3d(0, 0, 0); // Time, az, el
+    Eigen::Vector2d average_az_el = Eigen::Vector2d(0, 0); // Az, El
+    Eigen::Vector2d instant_az_el = Eigen::Vector2d(0, 0); // Az, El
     double nmag = 0;
 };
 
