@@ -1,10 +1,9 @@
 #include <estimator.hpp>
-#include <iostream>
 
-double interp1MDWL(Eigen::VectorXd x, Eigen::VectorXd y, double xq, bool dounwrap, double wraprange);
-double interp1(Eigen::VectorXd x, Eigen::VectorXd y, double xq);
+double interp1MDWL(const Eigen::VectorXd x, const Eigen::VectorXd y, const double xq, const bool dounwrap, const double wraprange);
+double interp1(const Eigen::VectorXd x, const Eigen::VectorXd y, double xq);
 Eigen::Matrix3d getR(double roll, double pitch, double yaw);
-Eigen::MatrixXd sortMatrixByCol(Eigen::MatrixXd mat, uint32_t col);
+Eigen::MatrixXd sortMatrixByCol(const Eigen::MatrixXd mat, const uint32_t col);
 double wrapTo360(double deg_val);
 
 void Estimator::ingMagMessage(double net_time, Eigen::Vector3d vars) {
@@ -97,7 +96,7 @@ void Estimator::spin(double net_time_us) {
     }
 }
 
-double interp1MDWL(Eigen::VectorXd x, Eigen::VectorXd y, double xq, bool dounwrap, double wraprange) {
+double interp1MDWL(const Eigen::VectorXd x, const Eigen::VectorXd y, const double xq, const bool dounwrap, const double wraprange) {
     if (xq < x[0] || x.size() == 1) {
         return y[0];
     } else if (xq >= x[x.size() - 1]) {
@@ -120,7 +119,7 @@ double interp1MDWL(Eigen::VectorXd x, Eigen::VectorXd y, double xq, bool dounwra
     return interp1(x, y1, xq);
 }
 
-double interp1(Eigen::VectorXd x, Eigen::VectorXd y, double xq) {
+double interp1(const Eigen::VectorXd x, const Eigen::VectorXd y, double xq) {
     for (int i = 1; i < x.size(); i++) {
         if (xq <= x[i]) {
             double ref_ratio = (xq - x[i-1]) / (x[i] - x[i-1]);
@@ -152,7 +151,7 @@ Eigen::Matrix3d getR(double roll, double pitch, double yaw) {
     return R;
 }
 
-Eigen::MatrixXd sortMatrixByCol(Eigen::MatrixXd mat, uint32_t col) {
+Eigen::MatrixXd sortMatrixByCol(const Eigen::MatrixXd mat, const uint32_t col) {
     Eigen::MatrixXd sorted_mat = Eigen::MatrixXd::Zero(mat.rows(), mat.cols());
     std::pair<int, double> indexes_and_timestamps[mat.rows()];
     
