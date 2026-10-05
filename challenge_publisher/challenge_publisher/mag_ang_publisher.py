@@ -1,6 +1,7 @@
 import rclpy
 from rclpy.node import Node
 import time
+import os
 import numpy as np
 from pyulog.core import ULog
 from challenge_interfaces.msg import AngTimestamped, MagTimestamped
@@ -37,7 +38,8 @@ class MagAngPublisherNode(Node):
     def __init__(self, name):
         super().__init__(name)
         self.declare_parameter("start_time_s", -1)
-        self.declare_parameter("log_path", '/home/bryman360/Downloads/04_13_03.ulg')
+        username = os.environ.get('USERNAME')
+        self.declare_parameter("log_path", f'/home/{username}/Downloads/04_13_03.ulg')
         log_path = self.get_parameter("log_path").value
         self.ang_publisher_ = self.create_publisher(AngTimestamped, "vehicle_ang_ts", 10)
         self.mag_publisher_ = self.create_publisher(MagTimestamped, "sensor_mag_ts", 10)
