@@ -1,6 +1,8 @@
 import rclpy
 from rclpy.node import Node
+from rclpy.utilities import remove_ros_args
 import os
+import sys
 import argparse
 from challenge_interfaces.msg import AngTimestamped, MagTimestamped, AziEleTimestamped
 
@@ -100,9 +102,10 @@ class MonitoringNode(Node):
 
 
 def main(args=None):
+    clean_args = remove_ros_args(args=sys.argv)
     parser = argparse.ArgumentParser()
     parser.add_argument("--disable_visualization", action=argparse.BooleanOptionalAction, default=False)
-    parsed_args = parser.parse_args()
+    parsed_args = parser.parse_args(clean_args[1:])
     rclpy.init(args=args)
     node = MonitoringNode("monitoring")
     if parsed_args.disable_visualization:
